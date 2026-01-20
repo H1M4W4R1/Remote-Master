@@ -38,9 +38,15 @@ class Program
         }
 
         Console.WriteLine("Connected to device");
+        
+        while (true)
+        {
+            await device.Transmit<EV1527Protocol>(7300528);
+            await Task.Delay(10);
+        }
     }
 
-    private static void OnRadioSignal(IRadioProtocol protocol, long value)
+    private static void OnRadioSignal(IRadioProtocol protocol, ulong value)
     {
         Console.WriteLine($"Radio signal received for {protocol.Name} with value: {value}");
     }

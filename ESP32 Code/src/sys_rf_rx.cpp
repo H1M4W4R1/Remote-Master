@@ -6,10 +6,9 @@
 #include "esp32-hal-cpu.h"
 #include "sys_config.h"
 
-static RingBuffer<uint16_t, RF_RX_BUFFER_SIZE> rxBuffer;
+static RingBuffer<uint16_t, RF_RX_TIMINGS_BUFFER_SIZE> rxBuffer;
 static volatile uint32_t                       lastCycle    = 0;
 static volatile uint64_t                       lastSignalUs = 0;
-static uint32_t                                cyclesPerUs;
 
 void IRAM_ATTR rf_rx_isr()
 {
@@ -22,8 +21,7 @@ void IRAM_ATTR rf_rx_isr()
 void rf_rx_init()
 {
     pinMode(RF_RX_PIN, INPUT);
-    cyclesPerUs = getCpuFrequencyMhz();
-    lastCycle   = XTHAL_GET_CCOUNT();
+    lastCycle   = micros();
     attachInterrupt(RF_RX_PIN, rf_rx_isr, CHANGE);
 }
 
@@ -31,6 +29,8 @@ void rf_rx_init()
 {
     for (;;)
     {
+        vTaskDelay(1);
+
         uint16_t deltaCycles;
         while (rxBuffer.pop(deltaCycles))
         {

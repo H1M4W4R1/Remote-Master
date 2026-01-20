@@ -6,8 +6,9 @@
         
         public ushort Bits { get; }
         
-        public bool TryParse(List<ushort> values, out long value);
-        
+        public bool TryParse(List<ushort> values, out ulong value);
+        public List<ushort> BuildPacket(in ulong value);
+
     }
 
 }

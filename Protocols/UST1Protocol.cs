@@ -25,15 +25,13 @@
             return (h is >= SYNC_MIN and <= SYNC_MAX && l is >= SYNC_MIN and <= SYNC_MAX);
         }
 
-        public bool TryParse(List<ushort> values, out long value)
+        public bool TryParse(List<ushort> values, out ulong value)
         {
             const int PACKET_LENGTH = 2 + BITS * 2; // (Sync + bits of data) x2
             
-            value = -1;
+            value = 0;
             if (values.Count < PACKET_LENGTH) return false;  
             if (!VerifySync(values[0], values[1])) return false;
-
-            value = 0;
             
             for (int n = 2; n < PACKET_LENGTH; n+= 2)
             {
@@ -46,6 +44,12 @@
             }
             
             return true; 
+        }
+
+        public List<ushort> BuildPacket(in ulong value)
+        {
+            // Do nothing
+            return new List<ushort>();
         }
     }
 }

@@ -11,10 +11,10 @@ namespace RadioRemote.Devices
     public sealed class RadioSerialDevice : SerialDeviceBase
     {
         private const int LIST_MAX_SIZE = 256;
-        
+
         private string _cachedString = "";
         private readonly List<ushort> _receivedValues = [];
-        
+
         /// <summary>
         ///     List of all radio protocols registered in entire app (including custom libraries)
         /// </summary>
@@ -23,8 +23,8 @@ namespace RadioRemote.Devices
         /// <summary>
         ///     Event raised whenever radio code was parsed successfully
         /// </summary>
-        public event Delegates.OnRadioSignalReceivedHandler? OnRadioSignalReceived; 
-        
+        public event Delegates.OnRadioSignalReceivedHandler? OnRadioSignalReceived;
+
         public RadioSerialDevice(SerialPortDeviceAddress deviceAddress) : base(deviceAddress,
             new SerialInterfaceSettings(2_000_000))
         {
@@ -51,7 +51,10 @@ namespace RadioRemote.Devices
                     if (ushort.TryParse(hexValue, System.Globalization.NumberStyles.HexNumber, null,
                             out ushort value))
                     {
-                        _receivedValues.Add(value);
+                        lock (_receivedValues)
+                        {
+                            _receivedValues.Add(value);
+                        }
                     }
                     else
                     {
@@ -59,13 +62,16 @@ namespace RadioRemote.Devices
                     }
                 }
 
-                // Limit received values lenght
-                while (_receivedValues.Count >= LIST_MAX_SIZE)
+                lock (_receivedValues)
                 {
-                    _receivedValues.RemoveAt(0);
+                    // Limit received values lenght
+                    while (_receivedValues.Count >= LIST_MAX_SIZE)
+                    {
+                        _receivedValues.RemoveAt(0);
 
-                    // Run protocol detection
-                    AttemptToDetectRemoteProtocol();
+                        // Run protocol detection
+                        AttemptToDetectRemoteProtocol();
+                    }
                 }
             }
             catch (Exception ex)
@@ -80,12 +86,31 @@ namespace RadioRemote.Devices
             {
                 // Check if protocol is valid for current data
                 IRadioProtocol protocol = KnownRadioProtocols[index];
-                if (!protocol.TryParse(_receivedValues, out long remoteCode)) continue;
-                
+                if (!protocol.TryParse(_receivedValues, out ulong remoteCode)) continue;
+
                 // Handle parsing radio data
-                OnRadioSignalReceived?.Invoke(protocol, remoteCode);                  
+                OnRadioSignalReceived?.Invoke(protocol, remoteCode);
                 return;
             }
+        }
+
+        public async ValueTask<bool> Transmit<TRadioProtocol>(ulong value)
+        {
+            IRadioProtocol? protocol = KnownRadioProtocols.FirstOrDefault(protocol => protocol is TRadioProtocol);
+            if (protocol is null) return false;
+
+            List<ushort> data = protocol.BuildPacket(value);
+            
+            // Convert to string
+            StringBuilder sb = new();
+            for (int n = 0; n < data.Count; n++)
+            {
+                if (n > 0) sb.Append(':');
+                sb.Append($"{data[n]:X}");
+            }
+
+            sb.Append("\r\n");
+            return await WriteString(sb.ToString());
         }
 
         private static List<IRadioProtocol> GetAllRadioProtocolTypes()

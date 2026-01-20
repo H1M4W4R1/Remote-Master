@@ -24,5 +24,6 @@ included protocols for examples.
 
 All protocols will be recognized automatically when instance of device is created.
 
-## W.I.P.
-Programming remotes is not yet available (in both firmware and PC code).
+## Note for data transmission
+Transmission sometimes may not work properly due to high interference. It is recommended to 
+send a large amount of packets with cca. `10ms` delay between packets.
