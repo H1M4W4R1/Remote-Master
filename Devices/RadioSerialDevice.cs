@@ -6,7 +6,7 @@ using IRIS.Serial.Communication.Settings;
 using IRIS.Serial.Devices;
 using RadioRemote.Protocols;
 
-namespace RadioRemote
+namespace RadioRemote.Devices
 {
     public sealed class RadioSerialDevice : SerialDeviceBase
     {

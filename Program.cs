@@ -1,6 +1,7 @@
 ﻿using IRIS.Operations;
 using IRIS.Serial.Addressing;
 using IRIS.Utility;
+using RadioRemote.Devices;
 using RadioRemote.Protocols;
 
 namespace RadioRemote;
