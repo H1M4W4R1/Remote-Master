@@ -83,6 +83,11 @@ class Program
             case "scan": await RunRead(); break;
             case "write":
             case "program": await RunProgram(); break;
+            case "programread": case "program_read": 
+                _device.OnRadioSignalReceived += OnRadioSignal;
+                await RunProgram(); 
+                _device.OnRadioSignalReceived -= OnRadioSignal;
+                break;
             case "quit":
             case "exit":
             case "qqq":
