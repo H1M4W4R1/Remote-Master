@@ -125,7 +125,18 @@ class Program
     static ValueTask RunRead()
     {
         _device.OnRadioSignalReceived += OnRadioSignal;
+        Console.Clear();
+        Console.SetCursorPosition(0, 0);
+
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine("Waiting for RF signals...");
+        
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine();
+        Console.WriteLine("Press any key to quit");
+        
         Console.ReadKey();
+        _device.OnRadioSignalReceived -= OnRadioSignal;
         return ValueTask.CompletedTask;
     }
 
@@ -170,6 +181,9 @@ class Program
         }
         
         ask_for_value:
+        Console.Clear();
+        Console.SetCursorPosition(0, 0);
+        
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine("Please provide value to write");
         Console.Write("> ");
@@ -197,6 +211,21 @@ class Program
         Type protocolType = protocol.GetType();
         MethodInfo? method = _device.GetType().GetMethod(nameof(RadioSerialDevice.Transmit));
         MethodInfo? builtMethod = method?.MakeGenericMethod(protocolType);
+        
+        Console.Clear();
+        Console.SetCursorPosition(0, 0);
+
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write($"Transmitting packet [");
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
+        Console.Write($"{transmitValue}");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write($"] using protocol ");
+        Console.ForegroundColor = ConsoleColor.DarkCyan;
+        Console.WriteLine($"{protocol.Name}");
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine();
+        Console.WriteLine("Press any key to quit");
         
         while (true)
         {
