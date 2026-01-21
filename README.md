@@ -33,6 +33,8 @@ send a large amount of packets with cca. `10ms` delay between packets.
 If you've built an ESP32 dongle and programmed it with custom firmware you can proceed to connect.
 Start up the software and enter ESP32 serial port address (e.g. COM7).
 
+![Schematic](https://raw.githubusercontent.com/H1M4W4R1/Remote-Master/refs/heads/master/Images/Remote%20Unit.png)
+
 If everything's correct you will be greeted with a few options.
 
 ### Listing protocols
