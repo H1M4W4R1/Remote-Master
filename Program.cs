@@ -94,6 +94,15 @@ class Program
             case "q": Environment.Exit(0); break;
             case "list":
             {
+                Console.Clear();
+                Console.SetCursorPosition(0, 0);
+
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine("Available protocols:");
+                
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine();
+                Console.WriteLine("Press any key to quit");
                 
                 for (int n = 0; n < _device.KnownRadioProtocols.Count; n++)
                 {
