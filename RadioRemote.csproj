@@ -118,4 +118,8 @@
       <Content Include="ESP32 Code\.pio\build\project.checksum" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
+    </ItemGroup>
+
 </Project>

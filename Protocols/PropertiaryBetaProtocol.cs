@@ -1,6 +1,6 @@
 ﻿namespace RadioRemote.Protocols
 {
-    public sealed class UST1Protocol : IRadioProtocol
+    public sealed class PropertiaryBetaProtocol : IRadioProtocol
     {
         // -------- protocol timing (µs) --------
         public const ushort SYNC_MIN = 6500;
@@ -18,7 +18,7 @@
 
         public const ushort BITS = 18;
         public ushort Bits => BITS;
-        public string Name => "Unknown Standard Type 1";
+        public string Name => "P-BETA";
 
         private static bool VerifySync(ushort h, ushort l)
         {

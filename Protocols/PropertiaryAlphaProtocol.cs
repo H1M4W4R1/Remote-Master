@@ -2,32 +2,27 @@
 
 namespace RadioRemote.Protocols
 {
-    /// <summary>
-    ///     EV1527 protocol implementation
-    ///     Common 433MHz remote control protocol supporting 24-bit codes
-    ///     TODO: Support 20-bit codes
-    /// </summary>
-    [UsedImplicitly] public sealed class EV1527Protocol : IRadioProtocol
+    [UsedImplicitly] public sealed class PropertiaryAlphaProtocol : IRadioProtocol
     {
-        private ushort _desiredSyncLength = 11_600;
+        private ushort _desiredSyncLength = 4400;
 
         // -------- protocol timing (µs) --------
-        public const float SYNC_H_TO_DL_RATIO = 11_600f / 375;
+        public const float SYNC_H_TO_DL_RATIO = 4400f / 350;
         public const float SYNC_H_TO_DL_MIN = SYNC_H_TO_DL_RATIO / 1.2f;
         public const float SYNC_H_TO_DL_MAX = SYNC_H_TO_DL_RATIO * 1.2f;
 
-        public const float SYNC_H_TO_DH_RATIO = 11_600f / 1150f;
+        public const float SYNC_H_TO_DH_RATIO = 4400f / 920f;
         public const float SYNC_H_TO_DH_MIN = SYNC_H_TO_DH_RATIO / 1.2f;
         public const float SYNC_H_TO_DH_MAX = SYNC_H_TO_DH_RATIO * 1.2f;
         
-        public const float GENERIC_RATIO = 1150f / 375;
+        public const float GENERIC_RATIO = 920f / 350;
         public const float GENERIC_RATIO_MIN = GENERIC_RATIO / 1.2f;
         public const float GENERIC_RATIO_MAX = GENERIC_RATIO * 1.2f;
 
-        public const ushort MAX_BITS = 24;
+        public const ushort BITS = 16;
 
-        public ushort Bits => MAX_BITS;
-        public string Name => "EV1527";
+        public ushort Bits => BITS;
+        public string Name => "P-ALPHA";
 
         private static bool VerifyOne(ushort h, ushort l)
         {
@@ -50,13 +45,11 @@ namespace RadioRemote.Protocols
 
         public bool TryParse(List<ushort> values, out ulong value)
         {
-            const int PACKET_LENGTH = 1 + MAX_BITS * 2; // (Sync + bits of data) x2
+            const int PACKET_LENGTH = 1 + BITS * 2; // (Sync + bits of data) x2
 
             value = 0;
             if (values.Count < PACKET_LENGTH) return false;
             if (!VerifySync(values[0], values[1])) return false;
-
-            int nBitsRegistered = 0;
 
             for (int n = 1; n < PACKET_LENGTH; n += 2)
             {
@@ -65,24 +58,8 @@ namespace RadioRemote.Protocols
 
                 // Shift value left
                 value = value << 1;
-
-                if (VerifyOne(h, l))
-                {
-                    value |= 1; // Parse ratio
-                    nBitsRegistered++;
-                }
-                else if (VerifyZero(h, l))
-                {
-                    nBitsRegistered++;
-                }
-                else if(nBitsRegistered is 20 or 24)
-                {
-                    break;
-                }
-                else
-                {
-                    return false;
-                }
+                if (VerifyOne(h, l)) value |= 1; // Parse ratio
+                else if (!VerifyZero(h, l)) return false;
             }
 
             return true;
@@ -104,7 +81,7 @@ namespace RadioRemote.Protocols
             List<ushort> list = [_desiredSyncLength, shortPulse];
             
             // Run value using binary inversion
-            for (int n = MAX_BITS - 1; n >= 0; n--)
+            for (int n = BITS - 1; n >= 0; n--)
             {
                 // Check if bit is high
                 if ((value & (1UL << n)) > 0)
