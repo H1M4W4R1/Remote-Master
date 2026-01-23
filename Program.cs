@@ -7,6 +7,7 @@ using IRIS.Serial.Addressing;
 using IRIS.Utility;
 using RadioRemote.Devices;
 using RadioRemote.Protocols;
+using RadioRemote.Protocols.Data;
 
 namespace RadioRemote;
 
@@ -154,7 +155,7 @@ class Program
         return ValueTask.CompletedTask;
     }
 
-    private static void OnRadioSignal(IRadioProtocol protocol, ulong value)
+    private static void OnRadioSignal(IRadioProtocol protocol, IProtocolData data)
     {
         Console.ForegroundColor = ConsoleColor.White;
         Console.Write("Received RF signal for ");
@@ -163,7 +164,22 @@ class Program
         Console.ForegroundColor = ConsoleColor.White;
         Console.Write(" protocol with value: ");
         Console.ForegroundColor = ConsoleColor.DarkYellow;
-        Console.WriteLine($"{value} [{value:X8}]");
+        Console.Write($"{data.Value}");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write(" | ");
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
+        Console.Write($"{data.Value:B}");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write(" | ");
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
+        Console.Write($"{data.Value:X}");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write(" | [");
+        Console.ForegroundColor = ConsoleColor.DarkMagenta;
+        Console.Write($"{data.Bits}");
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.Write("b]");
+        Console.WriteLine();
     }
 
     static async ValueTask RunProgram()

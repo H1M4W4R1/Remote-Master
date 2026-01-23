@@ -5,6 +5,7 @@ using IRIS.Serial.Addressing;
 using IRIS.Serial.Communication.Settings;
 using IRIS.Serial.Devices;
 using RadioRemote.Protocols;
+using RadioRemote.Protocols.Data;
 
 namespace RadioRemote.Devices
 {
@@ -54,23 +55,20 @@ namespace RadioRemote.Devices
                         lock (_receivedValues)
                         {
                             _receivedValues.Add(value);
+
+                            // Run protocol detection
+                            AttemptToDetectRemoteProtocol();
+
+                            // Limit received values lenght
+                            if (_receivedValues.Count >= LIST_MAX_SIZE)
+                            {
+                                _receivedValues.RemoveAt(0);
+                            }
                         }
                     }
                     else
                     {
                         Debug.WriteLine($"Invalid hex value: {hexValue}");
-                    }
-                }
-
-                lock (_receivedValues)
-                {
-                    // Limit received values lenght
-                    while (_receivedValues.Count >= LIST_MAX_SIZE)
-                    {
-                        _receivedValues.RemoveAt(0);
-
-                        // Run protocol detection
-                        AttemptToDetectRemoteProtocol();
                     }
                 }
             }
@@ -86,10 +84,12 @@ namespace RadioRemote.Devices
             {
                 // Check if protocol is valid for current data
                 IRadioProtocol protocol = KnownRadioProtocols[index];
-                if (!protocol.TryParse(_receivedValues, out ulong remoteCode)) continue;
+                IProtocolData data = protocol.TryParseRaw(_receivedValues);
+                
+                if (!data.IsValid) continue;
 
                 // Handle parsing radio data
-                OnRadioSignalReceived?.Invoke(protocol, remoteCode);
+                OnRadioSignalReceived?.Invoke(protocol, data);
                 return;
             }
         }
@@ -99,8 +99,9 @@ namespace RadioRemote.Devices
             IRadioProtocol? protocol = KnownRadioProtocols.FirstOrDefault(protocol => protocol is TRadioProtocol);
             if (protocol is null) return false;
 
-            List<ushort> data = protocol.BuildPacket(value);
-            
+            if (protocol is not IValueRadioProtocol valueRadioProtocol) return false;
+            List<ushort> data =valueRadioProtocol.BuildPacket(value);
+
             // Convert to string
             StringBuilder sb = new();
             for (int n = 0; n < data.Count; n++)
