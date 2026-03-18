@@ -4,7 +4,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
-#include "sys_config.h"
+#include "../sys_config.h"
 
 struct TxCommand
 {

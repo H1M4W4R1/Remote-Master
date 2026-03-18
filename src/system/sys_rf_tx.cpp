@@ -1,14 +1,14 @@
-#include "sys_rf_tx.h"
+#include "../../include/system/sys_rf_tx.h"
 #include <Arduino.h>
-#include "config.h"
+#include "../../include/sys_config.h"
 
-#include "sys_config.h"
+#include "../../include/sys_config.h"
 #include "driver/gpio.h"
 
 QueueHandle_t txQueue;
 uint8_t tx_gpio_level;
 
-[[noreturn]] void rf_tx_task(void* arg)
+void rf_tx_task(void* arg)
 {
     pinMode(RF_TX_PIN, OUTPUT);
 
