@@ -35,7 +35,7 @@ void uart_task(void* arg)
         // Check if this is a protocol frame (contains colons and semicolon)
         if (input.indexOf(':') != -1 && input.indexOf(';') != -1) {
             // Encode the protocol frame
-            TxCommand command;
+            TxCommand command = {};
             if (g_protocolEncoder && g_protocolEncoder->encodeFrame(input.c_str(), command)) {
                 // Send to RF TX queue
                 xQueueSend(txQueue, &command, 0);
