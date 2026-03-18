@@ -18,6 +18,8 @@ void rf_tx_task(void* arg)
     {
         if (xQueueReceive(txQueue, &cmd, portMAX_DELAY))
         {
+            portDISABLE_INTERRUPTS();
+
             gpio_set_level((gpio_num_t) RF_TX_PIN, HIGH);
             tx_gpio_level = 0;
 
@@ -36,7 +38,11 @@ void rf_tx_task(void* arg)
 
             gpio_set_level((gpio_num_t) RF_TX_PIN, LOW);
 
+            portENABLE_INTERRUPTS();
+
             vTaskDelay(1);
         }
+
+        vTaskDelay(10);
     }
 }
