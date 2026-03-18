@@ -3,29 +3,45 @@
 #include "protocol_interface.h"
 #include <cstddef>
 
+// Simple protocol registry for RC-Switch integration
+// Maps protocol IDs (from RC-Switch) to protocol names and metadata
 class ProtocolRegistry {
 private:
-    static const size_t MAX_PROTOCOLS = 8;
-    IProtocol* protocols[MAX_PROTOCOLS];
+    struct ProtocolEntry {
+        int protocolId;           // RC-Switch protocol ID (or negative for custom)
+        const char* name;         // Protocol name (e.g., "EV1527")
+        bool supportsRx;
+        bool supportsTx;
+        IProtocol* customImpl;     // Optional custom implementation for non-standard protocols
+    };
+
+    static const size_t MAX_PROTOCOLS = 16;
+    ProtocolEntry protocols[MAX_PROTOCOLS];
     size_t protocolCount;
 
 public:
     ProtocolRegistry();
 
-    // Register a new protocol
-    // Returns true if successful, false if registry is full
-    bool registerProtocol(IProtocol* protocol);
+    // Register a protocol by ID and name
+    // For standard RC-Switch protocols: protocolId > 0, customImpl = nullptr
+    // For custom protocols: protocolId < 0, customImpl = custom IProtocol implementation
+    bool registerProtocol(int protocolId, const char* name, bool supportsRx, bool supportsTx, IProtocol* customImpl = nullptr);
 
-    // Get protocol by name
-    // Returns nullptr if not found
+    // Get protocol name by ID (from RC-Switch)
+    // Returns nullptr if protocol not registered
+    const char* getProtocolName(int protocolId);
+
+    // Get protocol ID by name
+    // Returns -1 if not found
+    int getProtocolId(const char* name);
+
+    // Get protocol by name (for advanced operations)
+    // Returns nullptr if not found or no custom implementation
     IProtocol* getProtocolByName(const char* name);
 
-    // Try to decode with ALL registered protocols
-    // Returns array of successful decodings and count
-    // outMatches: array to store matching protocol pointers (must be large enough)
-    // outCount: set to number of matches found
-    // Returns true if at least one protocol matched
-    bool tryDetectAllProtocols(const uint16_t* timings, size_t count,
-                               IProtocol** outMatches, size_t& outCount,
-                               size_t* out_timingsConsumedByFirst = nullptr);
+    // Check if protocol supports RX
+    bool supportsRx(int protocolId);
+
+    // Check if protocol supports TX
+    bool supportsTx(int protocolId);
 };

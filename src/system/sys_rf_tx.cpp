@@ -1,48 +1,45 @@
 #include "../../include/system/sys_rf_tx.h"
 #include <Arduino.h>
+#include <RCSwitch.h>
 #include "../../include/sys_config.h"
-
-#include "../../include/sys_config.h"
-#include "driver/gpio.h"
 
 QueueHandle_t txQueue;
-uint8_t tx_gpio_level;
+
+// Global RC-Switch transmitter instance (exposed for protocol configuration)
+RCSwitch rcswitch_tx;
+
+void rf_tx_init()
+{
+    // Initialize RC-Switch transmitter on GPIO26
+    // enableTransmit(pin) automatically sets up GPIO for output
+    rcswitch_tx.enableTransmit(RF_TX_PIN);
+
+    // Set transmission repeat count (how many times to repeat the signal)
+    // Higher values = more reliable transmission at cost of longer transmission time
+    rcswitch_tx.setRepeatTransmit(10);  // 10 repetitions
+}
 
 void rf_tx_task(void* arg)
 {
-    pinMode(RF_TX_PIN, OUTPUT);
-
-
     TxCommand cmd;
+
     for (;;)
     {
         if (xQueueReceive(txQueue, &cmd, portMAX_DELAY))
         {
-            portDISABLE_INTERRUPTS();
+            // Use RC-Switch to send the signal
+            // rcswitch.send(value, bitLength, protocol)
+            // The protocol parameter is optional if using default
+            // RC-Switch handles all timing precision internally
+            rcswitch_tx.send(cmd.value, cmd.bitLength);
 
-            gpio_set_level((gpio_num_t) RF_TX_PIN, HIGH);
-            tx_gpio_level = 0;
-
-            uint32_t index = 0;
-
-            while (index < RF_TX_TIMINGS_BUFFER_SIZE)
-            {
-                const uint16_t timing = cmd.timings[index];
-                if (timing == 0) break;
-
-                delayMicroseconds(timing);
-                tx_gpio_level ^= 1;
-                gpio_set_level((gpio_num_t) RF_TX_PIN, tx_gpio_level);
-                index++;
-            }
-
-            gpio_set_level((gpio_num_t) RF_TX_PIN, LOW);
-
-            portENABLE_INTERRUPTS();
-
-            vTaskDelay(1);
+            // Small delay between consecutive transmissions
+            // RC-Switch handles the internal timing, we just need to space out TX commands
+            vTaskDelay(pdMS_TO_TICKS(100));
         }
-
-        vTaskDelay(10);
+        else
+        {
+            vTaskDelay(10);
+        }
     }
 }

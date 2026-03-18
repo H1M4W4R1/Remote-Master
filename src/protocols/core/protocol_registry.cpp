@@ -3,16 +3,48 @@
 
 ProtocolRegistry::ProtocolRegistry() : protocolCount(0) {
     for (size_t i = 0; i < MAX_PROTOCOLS; i++) {
-        protocols[i] = nullptr;
+        protocols[i].protocolId = 0;
+        protocols[i].name = nullptr;
+        protocols[i].supportsRx = false;
+        protocols[i].supportsTx = false;
+        protocols[i].customImpl = nullptr;
     }
 }
 
-bool ProtocolRegistry::registerProtocol(IProtocol* protocol) {
-    if (protocol == nullptr || protocolCount >= MAX_PROTOCOLS) {
+bool ProtocolRegistry::registerProtocol(int protocolId, const char* name, bool supportsRx, bool supportsTx, IProtocol* customImpl) {
+    if (name == nullptr || protocolCount >= MAX_PROTOCOLS) {
         return false;
     }
-    protocols[protocolCount++] = protocol;
+
+    protocols[protocolCount].protocolId = protocolId;
+    protocols[protocolCount].name = name;
+    protocols[protocolCount].supportsRx = supportsRx;
+    protocols[protocolCount].supportsTx = supportsTx;
+    protocols[protocolCount].customImpl = customImpl;
+    protocolCount++;
+
     return true;
+}
+
+const char* ProtocolRegistry::getProtocolName(int protocolId) {
+    for (size_t i = 0; i < protocolCount; i++) {
+        if (protocols[i].protocolId == protocolId) {
+            return protocols[i].name;
+        }
+    }
+    return nullptr;
+}
+
+int ProtocolRegistry::getProtocolId(const char* name) {
+    if (name == nullptr) {
+        return -1;
+    }
+    for (size_t i = 0; i < protocolCount; i++) {
+        if (strcmp(protocols[i].name, name) == 0) {
+            return protocols[i].protocolId;
+        }
+    }
+    return -1;
 }
 
 IProtocol* ProtocolRegistry::getProtocolByName(const char* name) {
@@ -20,40 +52,27 @@ IProtocol* ProtocolRegistry::getProtocolByName(const char* name) {
         return nullptr;
     }
     for (size_t i = 0; i < protocolCount; i++) {
-        if (strcmp(protocols[i]->getName(), name) == 0) {
-            return protocols[i];
+        if (strcmp(protocols[i].name, name) == 0) {
+            return protocols[i].customImpl;  // May be nullptr for standard RC-Switch protocols
         }
     }
     return nullptr;
 }
 
-bool ProtocolRegistry::tryDetectAllProtocols(const uint16_t* timings, size_t count,
-                                             IProtocol** outMatches, size_t& outCount,
-                                             size_t* out_timingsConsumedByFirst) {
-    outCount = 0;
-
-    if (timings == nullptr || count == 0 || outMatches == nullptr) {
-        return false;
-    }
-
-    size_t firstConsumedCount = 0;
-    bool anyMatch = false;
-
+bool ProtocolRegistry::supportsRx(int protocolId) {
     for (size_t i = 0; i < protocolCount; i++) {
-        ProtocolData data;
-        size_t timingsConsumed = 0;
-
-        if (protocols[i]->tryParse(timings, count, data, timingsConsumed) && data.isValid) {
-            outMatches[outCount++] = protocols[i];
-            anyMatch = true;
-
-            // Record how many timings the first successful protocol consumed
-            if (out_timingsConsumedByFirst && outCount == 1) {
-                firstConsumedCount = timingsConsumed;
-                *out_timingsConsumedByFirst = firstConsumedCount;
-            }
+        if (protocols[i].protocolId == protocolId) {
+            return protocols[i].supportsRx;
         }
     }
+    return false;
+}
 
-    return anyMatch;
+bool ProtocolRegistry::supportsTx(int protocolId) {
+    for (size_t i = 0; i < protocolCount; i++) {
+        if (protocols[i].protocolId == protocolId) {
+            return protocols[i].supportsTx;
+        }
+    }
+    return false;
 }
